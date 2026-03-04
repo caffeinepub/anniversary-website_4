@@ -874,9 +874,6 @@ function FinalPageSection() {
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
 function Footer({ coupleInfo }: { coupleInfo: CoupleInfo }) {
-  const year = new Date().getFullYear();
-  const hostname = encodeURIComponent(window.location.hostname);
-
   return (
     <footer
       data-ocid="footer.section"
@@ -909,26 +906,6 @@ function Footer({ coupleInfo }: { coupleInfo: CoupleInfo }) {
         <div className="ornament-divider mb-8 max-w-[200px] mx-auto">
           <span className="text-primary text-xs">♥</span>
         </div>
-
-        <p className="font-body text-xs text-muted-foreground">
-          © {year}. Built with{" "}
-          <Heart
-            className="inline text-accent"
-            size={12}
-            fill="currentColor"
-            aria-hidden="true"
-          />{" "}
-          using{" "}
-          <a
-            href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${hostname}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:text-primary/70 underline underline-offset-2 transition-colors duration-200"
-            data-ocid="footer.link"
-          >
-            caffeine.ai
-          </a>
-        </p>
       </div>
     </footer>
   );
