@@ -1,5 +1,5 @@
 import { Heart, Sparkles } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CoupleInfo, TimelineMilestone } from "./backend.d";
 import {
   useCoupleInfo,
@@ -362,11 +362,8 @@ function HeroSection({ coupleInfo }: { coupleInfo: CoupleInfo }) {
         </div>
 
         {/* Days Together label */}
-        <p className="text-xs uppercase tracking-[0.25em] text-primary/80 mb-2 font-body font-semibold">
-          We have been together for
-        </p>
         <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground mb-6 font-body">
-          Since September 25, 2025 at 4:10 PM
+          Since September 25, 2025
         </p>
 
         {/* Timer */}
@@ -488,6 +485,78 @@ function SweetNoteCard({
   );
 }
 
+// ─── Landing Page ─────────────────────────────────────────────────────────────
+function LandingPage({ onEnter }: { onEnter: () => void }) {
+  return (
+    <section
+      data-ocid="landing.section"
+      className="relative min-h-screen flex flex-col items-center justify-center px-6 hero-bg overflow-hidden"
+    >
+      <FloatingHearts />
+
+      {/* Soft radial glow behind text */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden="true"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 50% at 50% 50%, oklch(0.85 0.22 350 / 0.22) 0%, transparent 70%)",
+        }}
+      />
+
+      <div className="relative z-10 flex flex-col items-center gap-10 text-center">
+        {/* Greeting */}
+        <h1
+          className="font-display leading-none"
+          style={{
+            fontSize: "clamp(3rem, 12vw, 7rem)",
+            fontWeight: 800,
+            color: "oklch(0.35 0.15 355)",
+            textShadow:
+              "0 2px 24px oklch(0.72 0.30 355 / 0.25), 0 1px 0 oklch(0.95 0.06 350)",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Hello Bagade
+        </h1>
+
+        {/* Subtitle line */}
+        <p
+          className="text-primary/70 text-base italic"
+          style={{ fontFamily: "'Lora', 'Georgia', serif" }}
+        >
+          I made something for you
+        </p>
+
+        {/* Small decorative hearts row */}
+        <div className="flex items-center gap-3" aria-hidden="true">
+          <span className="text-primary/40 text-sm">♥</span>
+          <span className="w-16 h-px bg-primary/30" />
+          <span className="text-primary text-lg">♥</span>
+          <span className="w-16 h-px bg-primary/30" />
+          <span className="text-primary/40 text-sm">♥</span>
+        </div>
+
+        {/* CTA button */}
+        <button
+          data-ocid="landing.primary_button"
+          onClick={onEnter}
+          className="landing-love-btn font-display text-lg sm:text-xl font-bold px-10 py-4 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/50"
+          type="button"
+        >
+          <span className="mr-2" aria-hidden="true">
+            ♥
+          </span>
+          Click if you really love me
+          <span className="ml-2" aria-hidden="true">
+            ♥
+          </span>
+        </button>
+      </div>
+    </section>
+  );
+}
+
 // ─── Gallery Section ──────────────────────────────────────────────────────────
 const GALLERY_PHOTOS = [
   {
@@ -512,8 +581,20 @@ const GALLERY_PHOTOS = [
   },
 ];
 
+function shuffleArray<T>(arr: T[]): T[] {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 function GallerySection() {
   const headingRef = useFadeIn();
+
+  // Shuffle once on mount; stable for the session
+  const shuffledPhotos = useMemo(() => shuffleArray(GALLERY_PHOTOS), []);
 
   return (
     <section
@@ -541,13 +622,13 @@ function GallerySection() {
       <div className="max-w-5xl mx-auto">
         {/* Top row: 2 photos */}
         <div className="grid grid-cols-2 gap-4 mb-4">
-          {GALLERY_PHOTOS.slice(0, 2).map((photo, index) => (
+          {shuffledPhotos.slice(0, 2).map((photo, index) => (
             <GalleryItem key={photo.src} photo={photo} index={index} tall />
           ))}
         </div>
         {/* Bottom row: 3 photos */}
         <div className="grid grid-cols-3 gap-4">
-          {GALLERY_PHOTOS.slice(2, 5).map((photo, index) => (
+          {shuffledPhotos.slice(2, 5).map((photo, index) => (
             <GalleryItem
               key={photo.src}
               photo={photo}
@@ -827,12 +908,19 @@ function LoadingState() {
 
 // ─── Root App ─────────────────────────────────────────────────────────────────
 export default function App() {
+  const [page, setPage] = useState<"landing" | "main">("landing");
+
   const coupleQuery = useCoupleInfo();
   const letterQuery = useLoveLetter();
   const timelineQuery = useTimelineMilestones();
 
   const isLoading =
     coupleQuery.isPending || letterQuery.isPending || timelineQuery.isPending;
+
+  // Show landing page first regardless of loading state
+  if (page === "landing") {
+    return <LandingPage onEnter={() => setPage("main")} />;
+  }
 
   if (isLoading) return <LoadingState />;
 
@@ -847,7 +935,7 @@ export default function App() {
 
   // Love letter from Jeeya to Anuj — always use Jeeya's exact letter
   const letterContent =
-    "My baby Anuj,\n\nFrom the moment you became mine on September 25, my world has been more colourful, more joyful, and more complete. Every laugh we have shared, every quiet moment spent together, every little memory we have created — I hold all of it close to my heart.\n\nYou have a way of making even the simplest days feel like something worth remembering. I never knew love could feel this natural, this warm, and this real until I found it with you.\n\nAs we reach six months together on March 25, I want you to know that every single day with you has been a gift. Here is to many more months, many more smiles, and a lifetime of us.\n\nAlways yours,\nJeeya";
+    "My baby,\n\nFrom the moment you became mine on September 25, my world has been more colourful, more joyful, and more complete. Every laugh we have shared, every quiet moment spent together, every little memory we have created — I hold all of it close to my heart.\n\nYou have a way of making even the simplest days feel like something worth remembering. I never knew love could feel this natural, this warm, and this real until I found it with you.\n\nAs we reach six months together on March 25, I want you to know that every single day with you has been a gift. Here is to many more months, many more smiles, and a lifetime of us.\n\nAlways yours,\nJeeya";
 
   return (
     <main>

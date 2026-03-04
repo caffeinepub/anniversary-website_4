@@ -351,6 +351,68 @@
 }
 
 /* ================================================
+   LANDING PAGE LOVE BUTTON
+   ================================================ */
+@keyframes love-btn-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 oklch(0.60 0.28 355 / 0.40),
+      0 8px 32px oklch(0.60 0.28 355 / 0.30);
+  }
+  50% {
+    box-shadow:
+      0 0 0 10px oklch(0.60 0.28 355 / 0.0),
+      0 8px 40px oklch(0.60 0.28 355 / 0.45);
+  }
+}
+
+.landing-love-btn {
+  background: linear-gradient(
+    135deg,
+    oklch(0.62 0.28 355) 0%,
+    oklch(0.55 0.26 15) 100%
+  );
+  color: oklch(0.99 0.004 60);
+  border: none;
+  letter-spacing: 0.01em;
+  animation: love-btn-pulse 2.5s ease-in-out infinite;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-love-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    oklch(0.70 0.24 345) 0%,
+    oklch(0.62 0.26 5) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: inherit;
+}
+
+.landing-love-btn:hover::before {
+  opacity: 1;
+}
+
+.landing-love-btn:hover {
+  transform: translateY(-3px) scale(1.04);
+}
+
+.landing-love-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.landing-love-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+/* ================================================
    ANIMATE HEART BEAT (Tailwind utility)
    ================================================ */
 @keyframes heartbeat {
