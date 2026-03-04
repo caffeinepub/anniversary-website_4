@@ -824,6 +824,54 @@ function TimelineCard({ milestone }: { milestone: TimelineMilestone }) {
   );
 }
 
+// ─── Final Page Section ───────────────────────────────────────────────────────
+function FinalPageSection() {
+  const ref = useFadeIn();
+
+  return (
+    <section
+      data-ocid="final.section"
+      className="relative min-h-screen flex flex-col items-center justify-center px-6 hero-bg overflow-hidden"
+    >
+      <FloatingHearts />
+
+      <div
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden="true"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 50% at 50% 50%, oklch(0.85 0.22 350 / 0.22) 0%, transparent 70%)",
+        }}
+      />
+
+      <div
+        ref={ref}
+        className="fade-in-section relative z-10 flex flex-col items-center gap-6 text-center"
+      >
+        <h2
+          className="font-display font-bold leading-tight"
+          style={{
+            fontSize: "clamp(2.5rem, 10vw, 6rem)",
+            color: "oklch(0.35 0.15 355)",
+            textShadow:
+              "0 2px 24px oklch(0.72 0.30 355 / 0.25), 0 1px 0 oklch(0.95 0.06 350)",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Still choosing you, Bagade 🤍
+        </h2>
+
+        <p
+          className="font-body text-xl sm:text-2xl text-primary/80 italic"
+          style={{ fontFamily: "'Lora', 'Georgia', serif" }}
+        >
+          6 months down. Many more to go.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 // ─── Footer ───────────────────────────────────────────────────────────────────
 function Footer({ coupleInfo }: { coupleInfo: CoupleInfo }) {
   const year = new Date().getFullYear();
@@ -944,6 +992,7 @@ export default function App() {
       <GallerySection />
       <LoveLetterSection letter={letterContent} />
       {milestones.length > 0 && <TimelineSection milestones={milestones} />}
+      <FinalPageSection />
       <Footer coupleInfo={coupleInfo} />
     </main>
   );
