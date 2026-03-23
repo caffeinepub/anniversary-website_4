@@ -1,6 +1,8 @@
-import { Heart, Sparkles } from "lucide-react";
+import { Heart, Music, Sparkles, VolumeX } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CoupleInfo, TimelineMilestone } from "./backend.d";
+import { AdminPage } from "./components/AdminPage";
+import { useActor } from "./hooks/useActor";
 import {
   useCoupleInfo,
   useLoveLetter,
@@ -930,9 +932,109 @@ function LoadingState() {
     </div>
   );
 }
+// ─── Background Music Player ─────────────────────────────────────────────────
+function MusicPlayer() {
+  const { actor } = useActor();
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [muted, setMuted] = useState(false);
+  const [hasMusic, setHasMusic] = useState(false);
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    if (!actor) return;
+    actor
+      .getBackgroundMusicKey()
+      .then((blob) => {
+        if (!blob) return;
+        const url = blob.getDirectURL();
+        const audio = audioRef.current;
+        if (!audio) return;
+        audio.src = url;
+        audio.loop = true;
+        audio.volume = 0.3;
+        setHasMusic(true);
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => setStarted(true))
+            .catch(() => {
+              // Autoplay blocked — start muted
+              audio.muted = true;
+              setMuted(true);
+              audio
+                .play()
+                .then(() => setStarted(true))
+                .catch(() => {});
+            });
+        }
+      })
+      .catch(() => {});
+  }, [actor]);
+
+  function toggle() {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (!started) {
+      audio.muted = false;
+      audio
+        .play()
+        .then(() => setStarted(true))
+        .catch(() => {});
+      setMuted(false);
+      return;
+    }
+    audio.muted = !audio.muted;
+    setMuted(!muted);
+  }
+
+  if (!hasMusic) return null;
+
+  return (
+    <>
+      <audio ref={audioRef} style={{ display: "none" }}>
+        <track kind="captions" />
+      </audio>
+      <button
+        onClick={toggle}
+        type="button"
+        data-ocid="music.toggle"
+        aria-label={muted ? "Unmute music" : "Mute music"}
+        style={{
+          position: "fixed",
+          bottom: "1.5rem",
+          right: "1.5rem",
+          zIndex: 9999,
+          width: "2.75rem",
+          height: "2.75rem",
+          borderRadius: "50%",
+          background: "linear-gradient(135deg, #ff6ba8, #e91e8c)",
+          border: "none",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 4px 16px rgba(233,30,140,0.35)",
+          color: "white",
+          transition: "transform 0.2s",
+        }}
+      >
+        {muted ? <VolumeX size={16} /> : <Music size={16} />}
+      </button>
+    </>
+  );
+}
 
 // ─── Root App ─────────────────────────────────────────────────────────────────
 export default function App() {
+  // Admin route
+  if (window.location.pathname === "/admin") {
+    return <AdminPage />;
+  }
+
+  return <AnniversaryApp />;
+}
+
+function AnniversaryApp() {
   const [page, setPage] = useState<"landing" | "main">("landing");
 
   const coupleQuery = useCoupleInfo();
@@ -963,14 +1065,17 @@ export default function App() {
     "My baby,\n\nFrom the moment you became mine on September 25, my world has been more colourful, more joyful, and more complete. Every laugh we have shared, every quiet moment spent together, every little memory we have created — I hold all of it close to my heart.\n\nYou have a way of making even the simplest days feel like something worth remembering. I never knew love could feel this natural, this warm, and this real until I found it with you.\n\nAs we reach six months together on March 25, I want you to know that every single day with you has been a gift. Here is to many more months, many more smiles, and a lifetime of us.\n\nAlways yours,\nJeeya";
 
   return (
-    <main>
-      <HeroSection coupleInfo={coupleInfo} />
-      <SweetNotesSection />
-      <GallerySection />
-      <LoveLetterSection letter={letterContent} />
-      {milestones.length > 0 && <TimelineSection milestones={milestones} />}
-      <FinalPageSection />
-      <Footer coupleInfo={coupleInfo} />
-    </main>
+    <>
+      <main>
+        <HeroSection coupleInfo={coupleInfo} />
+        <SweetNotesSection />
+        <GallerySection />
+        <LoveLetterSection letter={letterContent} />
+        {milestones.length > 0 && <TimelineSection milestones={milestones} />}
+        <FinalPageSection />
+        <Footer coupleInfo={coupleInfo} />
+      </main>
+      <MusicPlayer />
+    </>
   );
 }

@@ -1,11 +1,23 @@
 import Principal "mo:core/Principal";
 import Iter "mo:core/Iter";
 import Array "mo:core/Array";
-
+import Map "mo:core/Map";
 import Runtime "mo:core/Runtime";
+
+import AccessControl "authorization/access-control";
+import MixinAuthorization "authorization/MixinAuthorization";
+import Storage "blob-storage/Storage";
+import MixinStorage "blob-storage/Mixin";
 
 
 actor {
+  // Initialize access control system state
+  let accessControlState = AccessControl.initState();
+  // Mixin access control system functions
+  include MixinAuthorization(accessControlState);
+  // Include blob storage (for images, etc)
+  include MixinStorage();
+
   type CoupleInfo = {
     partner1Name : Text;
     partner2Name : Text;
@@ -24,6 +36,12 @@ actor {
     recipient : Text;
     content : Text;
   };
+
+  public type UserProfile = {
+    name : Text;
+  };
+
+  let userProfiles = Map.empty<Principal, UserProfile>();
 
   var coupleInfo : CoupleInfo = {
     partner1Name = "Jeeya";
@@ -72,14 +90,31 @@ actor {
     "The future we are building together",
   ];
 
-  let adminPrincipal = Principal.fromText("2vxsx-fae");
+  var backgroundMusicKey : ?Storage.ExternalBlob = null;
 
-  func assertIsAdmin(caller : Principal) {
-    if (caller != adminPrincipal) {
-      Runtime.trap("Access denied: Only admin can perform this action.");
+  // User profile management
+  public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view profiles");
     };
+    userProfiles.get(caller);
   };
 
+  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile");
+    };
+    userProfiles.get(user);
+  };
+
+  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save profiles");
+    };
+    userProfiles.add(caller, profile);
+  };
+
+  // Public query functions - accessible to everyone including guests
   public query ({ caller }) func getCoupleInfo() : async CoupleInfo {
     coupleInfo;
   };
@@ -96,23 +131,43 @@ actor {
     reasonsList;
   };
 
+  public query ({ caller }) func getBackgroundMusicKey() : async ?Storage.ExternalBlob {
+    backgroundMusicKey;
+  };
+
+  // Admin-only update functions
   public shared ({ caller }) func updateCoupleInfo(newInfo : CoupleInfo) : async () {
-    assertIsAdmin(caller);
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Only admins can update couple information");
+    };
     coupleInfo := newInfo;
   };
 
   public shared ({ caller }) func updateLoveLetter(newLetter : LoveLetter) : async () {
-    assertIsAdmin(caller);
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can update love letters");
+    };
     loveLetter := newLetter;
   };
 
   public shared ({ caller }) func updateTimelineMilestones(newMilestones : [TimelineMilestone]) : async () {
-    assertIsAdmin(caller);
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can update milestones");
+    };
     timelineMilestones := newMilestones;
   };
 
   public shared ({ caller }) func updateReasonsList(newReasons : [Text]) : async () {
-    assertIsAdmin(caller);
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can update reason list");
+    };
     reasonsList := newReasons;
+  };
+
+  public shared ({ caller }) func setBackgroundMusicKey(blob : Storage.ExternalBlob) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can update background music");
+    };
+    backgroundMusicKey := ?blob;
   };
 };
